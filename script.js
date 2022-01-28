@@ -28,7 +28,6 @@ const controller = async (file, method="GET", obj) => {
 
 (async() =>{
     try{
-
 // -------------------------------//    render comics    //--------------------------------------//
         let universesOptions = await controller(`${universes}`);
 
@@ -38,7 +37,6 @@ const controller = async (file, method="GET", obj) => {
             option.innerText = `${el.name}`
             formSelect.append(option)
         })
-
 // -------------------------//   render table   //----------------------------//
         let render = await controller(`${heroes}`);
         render.forEach(el =>{
@@ -50,27 +48,26 @@ const controller = async (file, method="GET", obj) => {
                 <td>
                 <label class="heroFavoriteInput">Favorite: <input type="checkbox" data-name="${el.id}" ${check}></label></td>
                 <td><button data-name="${el.id}">Delete</button></td>`
-
         })
-
 // ----------------------------------------  Annihilation !!! -----------------------------------------//
-
         const deleteButton = document.querySelectorAll(`tbody button`)
         deleteButton.forEach(el =>{
-            el.addEventListener(`click`,async (e) => {
-               render.forEach((elem) =>{
+            el.addEventListener(`click`, (e) => {
+               render.forEach(async (elem) =>{
                     let eId = elem.id
                     let delTR = e.target.closest(`tr`)
                     let delId = e.target.getAttribute("data-name")
                     if (delId === eId){
                        controller(`${heroes}/${delId}`,`DELETE`)
                         console.log(`Этот ${elem.name} мне никогда не нравился!`  )
+                        render = await controller(`${heroes}`);
                         delTR.parentElement.removeChild(delTR);
                     }
                 })
-            })
-        })
 
+            })
+
+        })
 // -----------------------------        //Create and add new hero //     --------------------------------------------//
          addHeroButton.onclick = async function (e){
             e.preventDefault()
@@ -89,41 +86,51 @@ const controller = async (file, method="GET", obj) => {
             if(!matches){
                let addNewHero = await controller(`${heroes}`,`POST`, newHero);
                  render.push(addNewHero)
-                    let check = newHero.favorite ? `checked` : ``;
+                    let check = addNewHero.favorite ? `checked` : ``;
                     addTr.appendChild(document.createElement(`tr`))
                         .innerHTML = `
-                <td>${newHero.name}</td>
-                <td>${newHero.comics}</td>
+                <td>${addNewHero.name}</td>
+                <td>${addNewHero.comics}</td>
                 <td>
-                <label class="heroFavoriteInput">Favorite: <input type="checkbox" data-name="${addNewHero.id}" ${check}></label></td>
-                <td data-name="${addNewHero.id}"><button>Delete</button></td>`
-                // console.log(addNewHero.id)
-
+                <label class="heroFavoriteInput">Favorite: <input type="checkbox"  data-name="${addNewHero.id}" ${check}></label></td>
+                <td data-name="${addNewHero.id}"><button data-name="${newHero.name}">Delete</button></td>`
+//-----------------------------  del new heroes ---------------------------------------
+                 let newDel = document.querySelector(`button[data-name="${newHero.name}"]`)
+                    newDel.addEventListener(`click`,async (e) => {
+                            let delTR = e.target.closest(`tr`)
+                            let delId = addNewHero.id
+                             await controller(`${heroes}/${delId}`,`DELETE`)
+                                console.log(`Этот ${addNewHero.name} мне никогда не нравился!`  )
+                                delTR.parentElement.removeChild(delTR);
+                                 render = await controller(`${heroes}`);
+                        })
+// -------------------------------------  checkbox for new heroes  ----------------------------------------//
+                const checkBoxTbody = document.querySelectorAll(`tbody .heroFavoriteInput input`)
+                checkBoxTbody.forEach((el) =>{
+                    el.addEventListener(`click`,async (e) => {
+                        let inputID = e.target.getAttribute("data-name")
+                        // console.log(e.target.checked)
+                        // console.log(e.target.classList.contains('checkbox'))
+                        await  controller(`${heroes}/${inputID}`,"PUT",{favorite: e.target.checked})
+                        render = await controller(`${heroes}`);
+                    })
+                })
                 } else console.log(`Воу воу, полегче! ${newHero.name} уже есть. `)
         }
- // -------------------------------------  checkbox   ----------------------------------------//
+// -------------------------------------  checkbox   ----------------------------------------//
        const checkBoxTbody = document.querySelectorAll(`tbody .heroFavoriteInput input`)
         checkBoxTbody.forEach((el) =>{
             el.addEventListener(`click`,async (e) => {
               let inputID = e.target.getAttribute("data-name")
-                // console.log(e.target.checked)
-                // console.log(e.target.classList.contains('checkbox'))
                     await  controller(`${heroes}/${inputID}`,"PUT",{favorite: e.target.checked})
                 })
             })
-// ----------------------------------------//  checkboxes  //----------------------------------------------------//
-
     }
-
     catch (err) {
         console.log(err)
     }
-// finally {
-//         // -------------------------//   render table   //----------------------------//
-//      await controller(`${heroes}`);
-//     }
-
-
 })()
-// ***********************************************************************************************
 
+// Если вы дошли до конца и у вас не кровоточат глаза
+// https://www.youtube.com/watch?v=dnogaM9ZQOY
+// привет от (судя п овсему) моих родственников
